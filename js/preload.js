@@ -19,11 +19,18 @@ PhaserRoulette.Preload.prototype = {
     //load game assets
     this.load.image('table', 'assets/images/table.png');
     this.load.image('wheel', 'assets/images/wheel.png');
+    this.load.image('friends', 'assets/images/mario-friends.png');
+    this.load.image('block', 'assets/images/question-block.png');
     // this.load.spritesheet('playership', 'assets/images/player.png', 12, 12);
     // this.load.spritesheet('power', 'assets/images/power.png', 12, 12);
     this.load.image('playerPrize', 'assets/images/player-prize.png');
+    this.load.image('playerPrize2', 'assets/images/player-prize2.png');
+    this.load.image('playerPrize3', 'assets/images/player-prize3.png');
+    this.load.image('playerPrize4', 'assets/images/player-prize4.png');
+    this.load.image('playerPrize5', 'assets/images/player-prize5.png');
+    this.load.image('playerPrize6', 'assets/images/player-prize6.png');
     this.load.audio('spinner', 'assets/audio/spinner.ogg');
-    this.load.audio('winner', 'assets/audio/winner.ogg');
+    this.load.audio('coin', 'assets/audio/coin.ogg');
   },
   create: function() {
     this.state.start('menu');

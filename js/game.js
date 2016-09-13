@@ -11,11 +11,21 @@ PhaserRoulette.Game.prototype = {
     //background
     this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'table');
 
+    this.friends = this.add.sprite(this.game.world.centerX, this.game.world.centerY + 310, 'friends');
+    this.friends.anchor.setTo(0.5);
+
     this.wheel = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'wheel');
     this.wheel.anchor.setTo(0.5);
 
-    this.playerPrize = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'playerPrize');
-    this.playerPrize.anchor.setTo(0.5);
+    // //sounds
+    this.spinnerSound = this.game.add.audio('spinner');
+    this.coinSound = this.game.add.audio('coin');
+
+    // timer
+     this.game.time.events.add(Phaser.Timer.SECOND * 5, this.hitBlock, this);
+
+    // this.playerPrize = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'playerPrize');
+    // this.playerPrize.anchor.setTo(0.5);
     //
     // //create player
     // this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'playership');
@@ -31,22 +41,19 @@ PhaserRoulette.Game.prototype = {
     // this.playerSpeed = 120;
     // this.player.body.collideWorldBounds = true;
     //
-    // //the camera will follow the player in the world
-    // this.game.camera.follow(this.player);
-    //
     // //generate game elements
-    // this.generateCollectables();
-    // this.generateAsteriods();
+    this.generatePrizes();
+    this.spinWheel();
     //
     // //show score
     // this.showLabels();
     //
-    // //sounds
-    // this.explosionSound = this.game.add.audio('explosion');
-    // console.log(this.explosionSound);
-    // this.collectSound = this.game.add.audio('collect');
   },
   update: function() {
+
+    if(this.game.input.activePointer.justPressed()) {
+      this.gameOver();
+    }
     // if(this.game.input.activePointer.justPressed()) {
     //
     //   //move on the direction of the input
@@ -59,23 +66,45 @@ PhaserRoulette.Game.prototype = {
     // //overlapping between player and collectables
     // this.game.physics.arcade.overlap(this.player, this.collectables, this.collect, null, this);
   },
-  generateCollectables: function() {
-    // this.collectables = this.game.add.group();
-    //
-    // //enable physics in them
-    // this.collectables.enableBody = true;
-    // this.collectables.physicsBodyType = Phaser.Physics.ARCADE;
-    //
-    // //phaser's random number generator
-    // var numCollectables = this.game.rnd.integerInRange(100, 150)
-    // var collectable;
-    //
-    // for (var i = 0; i < numCollectables; i++) {
-    //   //add sprite
-    //   collectable = this.collectables.create(this.game.world.randomX, this.game.world.randomY, 'power');
-    //   collectable.animations.add('fly', [0, 1, 2, 3], 5, true);
-    //   collectable.animations.play('fly');
-    // }
+  generatePrizes: function() {
+    // create a group for the prize so they can move together
+    this.prizes = this.game.add.group();
+
+    //enable physics in them
+    this.prizes.enableBody = true;
+    this.prizes.physicsBodyType = Phaser.Physics.ARCADE;
+
+    // set the number of prizes in the pool
+    var numPrizes = 100;
+    var prize;
+
+    for (var i = 0; i < numPrizes; i++) {
+      // default random prize
+      var rndPrizeChoice = 'playerPrize';
+      // random prize number
+      var rndPrizeChance = this.game.rnd.integerInRange(0, 100);
+      if (rndPrizeChance >= 100) {
+        rndPrizeChoice = 'playerPrize6';
+      } else if (rndPrizeChance >= 95) {
+        rndPrizeChoice = 'playerPrize5';
+      } else if (rndPrizeChance >= 90) {
+        rndPrizeChoice = 'playerPrize4';
+      } else if (rndPrizeChance >= 80) {
+        rndPrizeChoice = 'playerPrize3';
+      } else if (rndPrizeChance >= 40) {
+        rndPrizeChoice = 'playerPrize2';
+      } else {
+        rndPrizeChoice = 'playerPrize';
+      }
+      //add prizes to the wheel
+      prize = this.prizes.create(this.game.world.centerX - 125 * i, this.game.world.centerY, rndPrizeChoice);
+      prize.scale.set(0.5, 0.5);
+      prize.anchor.setTo(0.5);
+    }
+
+    this.block = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'block');
+    this.block.scale.set(0.2, 0.2);
+    this.block.anchor.setTo(0.5);
 
   },
   generateAsteriods: function() {
@@ -100,9 +129,11 @@ PhaserRoulette.Game.prototype = {
     //   asteriod.body.collideWorldBounds = true;
     // }
   },
-  hitAsteroid: function(player, asteroid) {
+  hitBlock: function() {
     // //play explosion sound
     // //this.explosionSound.play();
+    this.game.add.tween(this.block).to( { y: 200 }, 1000, Phaser.Easing.Bounce.Out, true);
+    this.coinSound.play('',0,0.1);
     //
     // //make the player explode
     // var emitter = this.game.add.emitter(this.player.x, this.player.y, 100);
@@ -116,12 +147,18 @@ PhaserRoulette.Game.prototype = {
     // this.game.time.events.add(800, this.gameOver, this);
   },
   gameOver: function() {
-    // //pass it the score as a parameter
+    //pass it the score as a parameter
     // this.game.state.start('menu', true, false, this.playerScore);
+    this.spinnerSound.stop();
+    this.coinSound.stop();
+    this.game.state.start('menu');
   },
-  collect: function(player, collectable) {
-    // //play collect sound
-    // //this.collectSound.play();
+  spinWheel: function(player, collectable) {
+
+    this.game.add.tween(this.prizes).to( { x: 10000 }, 5000, Phaser.Easing.Cubic.Out, true);
+    // TODO Tween prizes.
+    //play spinner sound
+    this.spinnerSound.play('',0,0.6);
     //
     // //update score
     // this.playerScore++;
